@@ -1,0 +1,22 @@
+{
+  "name": "friend-ly-music-game",
+  "version": "1.0.0",
+  "description": "Multiplayer music guessing game with social deduction",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "test": "cd server && npm test && cd ../client && npm test",
+    "setup": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "keywords": ["music", "game", "multiplayer", "socket.io", "react"],
+  "author": "Friend.ly Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
