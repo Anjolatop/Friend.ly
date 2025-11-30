@@ -29,6 +29,7 @@ class Post(db.Model):
     # Quantity
     quantity = db.Column(db.Integer, nullable=True)  # Nullable for unlimited resources
     quantity_claimed = db.Column(db.Integer, default=0)
+    price = db.Column(db.Float, nullable=True)
     
     # Timing
     available_from = db.Column(db.DateTime, nullable=False)
@@ -93,6 +94,7 @@ class Post(db.Model):
             'status': self.status.value,
             'quantity': self.quantity,
             'quantity_claimed': self.quantity_claimed,
+            'price': self.price,
             'available_from': self.available_from.isoformat() if self.available_from else None,
             'available_until': self.available_until.isoformat() if self.available_until else None,
             'pickup_instructions': self.pickup_instructions,

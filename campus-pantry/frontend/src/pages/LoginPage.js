@@ -20,6 +20,8 @@ const LoginPage = () => {
     setLoading(false);
 
     if (result.success) {
+      // Inform the app that a login just happened (drives toasts)
+      window.dispatchEvent(new CustomEvent('user-logged-in'));
       navigate('/');
     } else {
       setError(result.error);

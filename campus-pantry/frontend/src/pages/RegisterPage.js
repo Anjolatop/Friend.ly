@@ -11,6 +11,7 @@ const RegisterPage = () => {
     first_name: '',
     last_name: '',
     username: '',
+    role: 'student',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,7 @@ const RegisterPage = () => {
       first_name: formData.first_name,
       last_name: formData.last_name,
       username: formData.username,
+      role: formData.role,
     });
     setLoading(false);
 
@@ -104,6 +106,21 @@ const RegisterPage = () => {
                   value={formData.username}
                   onChange={handleChange}
                 />
+              </div>
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                  Account type
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  value={formData.role}
+                  onChange={handleChange}
+                >
+                  <option value="student">Student / Regular user</option>
+                  <option value="organization">Organization / Food provider</option>
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -17,12 +17,12 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
 
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser();
-    } else {
+    if (!token) {
       setLoading(false);
+      return;
     }
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    fetchUser();
   }, [token]);
 
   const fetchUser = async () => {
@@ -81,10 +81,12 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    token,
     login,
     register,
     logout,
-    isAuthenticated: !!user,
+    // Consider authenticated if we have a token; user details may still be loading
+    isAuthenticated: !!token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

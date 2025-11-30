@@ -11,6 +11,7 @@ from .rating import Rating
 from .notification import Notification
 from .preference import Preference
 from .audit_log import AuditLog
+from .message import Message
 
 __all__ = [
     'User',
@@ -23,4 +24,5 @@ __all__ = [
     'Notification',
     'Preference',
     'AuditLog',
+    'Message',
 ]

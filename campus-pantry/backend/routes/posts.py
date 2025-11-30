@@ -161,6 +161,7 @@ def create_post():
         description=data.get('description'),
         post_type=PostType(data.get('type', 'surplus')),
         quantity=data.get('quantity'),
+        price=float(data['price']) if data.get('price') is not None else None,
         available_from=datetime.fromisoformat(data['available_from'].replace('Z', '+00:00')),
         available_until=datetime.fromisoformat(data['available_until'].replace('Z', '+00:00')),
         pickup_instructions=data.get('pickup_instructions'),
@@ -209,6 +210,8 @@ def update_post(post_id):
         post.description = data['description']
     if 'quantity' in data:
         post.quantity = data['quantity']
+    if 'price' in data:
+        post.price = float(data['price']) if data['price'] is not None else None
     if 'available_until' in data:
         post.available_until = datetime.fromisoformat(data['available_until'].replace('Z', '+00:00'))
     if 'pickup_instructions' in data:

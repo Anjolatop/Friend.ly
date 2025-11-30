@@ -17,6 +17,16 @@ def register():
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Email and password are required'}), 400
     
+    # Allow students (default) and organizations to sign up explicitly
+    role_value = data.get('role', UserRole.STUDENT.value)
+    try:
+        role = UserRole(role_value)
+    except ValueError:
+        return jsonify({'error': 'Invalid role. Use \"student\" or \"organization\".'}), 400
+    
+    if role == UserRole.ADMIN or role == UserRole.MODERATOR:
+        return jsonify({'error': 'Cannot self-register as admin or moderator'}), 403
+    
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
     
@@ -25,15 +35,16 @@ def register():
         username=data.get('username'),
         first_name=data.get('first_name'),
         last_name=data.get('last_name'),
-        role=UserRole.STUDENT
+        role=role
     )
     user.set_password(data['password'])
     
     db.session.add(user)
     db.session.commit()
     
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    # JWT library expects subject to be a string; store user id as string
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     
     return jsonify({
         'access_token': access_token,
@@ -60,8 +71,8 @@ def login():
     user.last_login = db.func.now()
     db.session.commit()
     
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     
     return jsonify({
         'access_token': access_token,
@@ -74,7 +85,7 @@ def login():
 def refresh():
     """Refresh access token"""
     current_user_id = get_jwt_identity()
-    new_token = create_access_token(identity=current_user_id)
+    new_token = create_access_token(identity=str(current_user_id))
     return jsonify({'access_token': new_token}), 200
 
 @auth_bp.route('/me', methods=['GET'])
@@ -82,7 +93,7 @@ def refresh():
 def get_current_user():
     """Get current user information"""
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    user = User.query.get(int(current_user_id))
     
     if not user:
         return jsonify({'error': 'User not found'}), 404

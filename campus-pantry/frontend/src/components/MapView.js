@@ -1,25 +1,34 @@
-import React, { useRef, useEffect, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React, { useRef, useEffect } from 'react';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { formatDistanceToNow } from 'date-fns';
 
-// Set Mapbox token
-const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
-
-if (MAPBOX_TOKEN) {
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-  console.log('Mapbox token set from environment');
-} else {
-  // Demo token (may have limited access to satellite styles)
-  mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXV4NTF0MDBmM2w4M2s4dWJ3N2cifQ.rJcFIG214AriISLbB6B5aw';
-  console.warn('⚠️ Using demo Mapbox token - satellite styles may not work. Get a free token at https://account.mapbox.com/');
-}
+// Token-free MapLibre style using OSM tiles
+const OSM_STYLE = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors'
+    }
+  },
+  layers: [
+    {
+      id: 'osm-tiles',
+      type: 'raster',
+      source: 'osm',
+      minzoom: 0,
+      maxzoom: 19
+    }
+  ]
+};
 
 const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
-  const [mapStyle, setMapStyle] = useState('satellite-streets-v12');
 
   // Initialize map
   useEffect(() => {
@@ -35,35 +44,34 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
 
     // Default center to USA (geographic center)
     const defaultCenter = center || [-98.5795, 39.8283];
-    const defaultZoom = center ? zoom : 4;
-    
-    console.log('🛰️ Creating map with SATELLITE style:', mapStyle);
-    
-    // Use satellite style
-    const styleUrl = `mapbox://styles/mapbox/${mapStyle}`;
-    
-    map.current = new mapboxgl.Map({
+    const defaultZoom = center ? zoom : 3.8;
+
+    map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: styleUrl,
+      style: OSM_STYLE,
       center: defaultCenter,
       zoom: defaultZoom,
       attributionControl: true,
+      maxZoom: 19,
     });
-    
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    
-    // Log when style loads
-    map.current.on('style.load', () => {
-      const style = map.current.getStyle();
-      console.log('✅ Map style loaded:', style.name || styleUrl);
-    });
-    
+
+    // Add controls similar to Google Maps
+    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+    map.current.addControl(
+      new maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showAccuracyCircle: false
+      }),
+      'top-right'
+    );
+    map.current.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'imperial' }), 'bottom-left');
+
     // Handle errors
     map.current.on('error', (e) => {
-      console.error('❌ Map error:', e.error?.message || e);
+      console.error('Map error:', e.error?.message || e);
     });
-    
+
     // Clean up on unmount
     return () => {
       if (map.current) {
@@ -72,7 +80,7 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
         map.current = null;
       }
     };
-  }, [mapStyle, center, zoom]);
+  }, [center, zoom]);
 
   // Update markers when posts change
   useEffect(() => {
@@ -84,17 +92,17 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
 
-      const bounds = new mapboxgl.LngLatBounds();
+      const bounds = new maplibregl.LngLatBounds();
       let hasMarkers = false;
-      
+
       posts.forEach(post => {
         if (post.location && post.location.latitude && post.location.longitude) {
           // Create marker container
           const markerContainer = document.createElement('div');
           markerContainer.style.position = 'relative';
           markerContainer.style.cursor = 'pointer';
-          
-          // Create marker dot - make it more visible on satellite view
+
+          // Create marker dot - make it more visible on aerial/satellite-like map
           const el = document.createElement('div');
           el.className = 'marker';
           el.style.width = '32px';
@@ -105,14 +113,14 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
           el.style.boxShadow = '0 3px 6px rgba(0,0,0,0.5), 0 0 0 2px rgba(0,0,0,0.2)';
           el.style.zIndex = '10';
           el.style.cursor = 'pointer';
-          
+
           // Extract city name for label
           const locationName = post.location?.name || '';
           const address = post.location?.address || '';
-          const cityMatch = address.match(/([A-Z][a-z]+(?: [A-Z][a-z]+)*), [A-Z]{2}/) || 
+          const cityMatch = address.match(/([A-Z][a-z]+(?: [A-Z][a-z]+)*), [A-Z]{2}/) ||
                            locationName.match(/(New York|Los Angeles|Chicago|Houston|Miami|Philadelphia|Phoenix|Dallas|San Francisco|Seattle)/);
           const cityName = cityMatch ? cityMatch[1] : null;
-          
+
           // Create city label
           if (cityName) {
             const label = document.createElement('div');
@@ -135,14 +143,14 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
             label.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
             markerContainer.appendChild(label);
           }
-          
+
           markerContainer.appendChild(el);
 
           // Use the cityName already extracted above, or fallback to location name
           const popupCityName = cityName || (post.location?.name || 'Location');
-          
-          const popup = new mapboxgl.Popup({ 
-            offset: 25, 
+
+          const popup = new maplibregl.Popup({
+            offset: 25,
             maxWidth: '320px',
             className: 'custom-popup'
           }).setHTML(`
@@ -155,6 +163,7 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
               <div class="mb-2">
                 <p class="text-xs font-semibold text-primary-600 uppercase tracking-wide mb-1">${popupCityName}</p>
                 <h3 class="font-bold text-lg text-gray-900">${post.title}</h3>
+                ${post.price !== null && post.price !== undefined ? `<p class="text-sm font-semibold text-primary-700 mt-1">$${Number(post.price).toFixed(2)}</p>` : ''}
               </div>
               <p class="text-sm text-gray-700 mt-2">${post.description || ''}</p>
               <div class="mt-3 space-y-2 pt-3 border-t border-gray-200">
@@ -167,7 +176,7 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
           `);
 
           const lngLat = [post.location.longitude, post.location.latitude];
-          const marker = new mapboxgl.Marker(markerContainer)
+          const marker = new maplibregl.Marker(markerContainer)
             .setLngLat(lngLat)
             .setPopup(popup)
             .addTo(map.current);
@@ -184,7 +193,7 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
           markers.current.push(marker);
         }
       });
-      
+
       // Fit map to show all markers if we have posts and no specific center
       if (hasMarkers && !center && map.current) {
         try {
@@ -205,26 +214,9 @@ const MapView = ({ posts, onPostClick, center, zoom = 4 }) => {
     }
   }, [posts, center, onPostClick]);
 
-  const toggleStyle = () => {
-    if (map.current) {
-      const newStyle = mapStyle === 'satellite-streets-v12' 
-        ? 'satellite-v9' 
-        : 'satellite-streets-v12';
-      setMapStyle(newStyle);
-      map.current.setStyle(`mapbox://styles/mapbox/${newStyle}`);
-    }
-  };
-
   return (
     <div className="w-full h-full relative">
       <div ref={mapContainer} className="w-full h-full rounded-lg" />
-      <button
-        onClick={toggleStyle}
-        className="absolute top-2 right-2 z-10 bg-white px-3 py-2 rounded shadow-md hover:shadow-lg text-xs font-semibold text-gray-700 border border-gray-300"
-        title="Toggle map style"
-      >
-        {mapStyle === 'satellite-streets-v12' ? 'Pure Satellite' : 'Satellite + Streets'}
-      </button>
     </div>
   );
 };

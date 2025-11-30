@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { FiClock, FiMapPin, FiTag } from 'react-icons/fi';
+import { FiClock, FiMapPin, FiTag, FiShoppingBag } from 'react-icons/fi';
 
 const Feed = ({ posts, onPostClick, loading }) => {
   if (loading) {
@@ -40,10 +40,20 @@ const Feed = ({ posts, onPostClick, loading }) => {
               />
             </div>
           )}
-          <h3 className="font-semibold text-lg text-gray-900">{post.title}</h3>
-          {post.description && (
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{post.description}</p>
-          )}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-lg text-gray-900">{post.title}</h3>
+              {post.description && (
+                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{post.description}</p>
+              )}
+            </div>
+            {post.price !== null && post.price !== undefined && (
+              <div className="flex items-center space-x-1 text-primary-700 font-semibold">
+                <FiShoppingBag className="h-4 w-4" />
+                <span>${Number(post.price).toFixed(2)}</span>
+              </div>
+            )}
+          </div>
           
           <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
             {post.distance !== undefined && (

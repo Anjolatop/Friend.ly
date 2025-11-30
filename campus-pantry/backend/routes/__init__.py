@@ -12,6 +12,7 @@ def register_routes(app):
     from .users import users_bp
     from .admin import admin_bp
     from .notifications import notifications_bp
+    from .messages import messages_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(posts_bp, url_prefix='/api/posts')
@@ -19,5 +20,6 @@ def register_routes(app):
     app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
+    app.register_blueprint(messages_bp, url_prefix='/api/messages')
 
 

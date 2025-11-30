@@ -52,7 +52,7 @@ const Header = () => {
                   className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   <FiUser className="h-5 w-5" />
-                  <span>{user?.first_name || user?.email}</span>
+                  <span>{user?.first_name || user?.email || 'Profile'}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
